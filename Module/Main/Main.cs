@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using Soe.Composable;
+using Soe.Parsing;
 using Soe.Runtime;
 
 [assembly: RuntimeModule<Soe.Build.Main>("Build")]
@@ -87,17 +88,16 @@ namespace Soe.Build
         /// <summary>
         /// Performs actions based on the options read
         /// </summary>
-        static bool ProcessFlags<ArgsSource>(Span<Option> options, in CommandFragment<ArgsSource> fragment)
-            where ArgsSource : struct, IStreamSource
+        static bool ProcessFlags(Span<Option> options, in CommandFragment fragment)
         {
             #region --log
             if(fragment.Name.Equals("log"))
             {
-                if (fragment.ToInteger(out int level))
+                if (fragment.ToInteger<TextBuffer, CommandFragment>(out int level))
                 {
                     Application.LogService.LogLevel = (SeverityFlags)level;
                 }
-                else if (Enum.TryParse(fragment.RawValue.ToString(), true, out SeverityFlags severity))
+                else if (Enum.TryParse(fragment.Value.ToString(), true, out SeverityFlags severity))
                 {
                     Application.LogService.LogLevel = severity;
                 }
