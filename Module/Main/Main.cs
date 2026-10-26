@@ -3,8 +3,10 @@
 
 using System.Runtime.CompilerServices;
 using System.Text;
+using Soe.Collections.Embedded;
 using Soe.Composable;
 using Soe.Parsing;
+using Soe.Reactive;
 using Soe.Runtime;
 
 [assembly: RuntimeModule<Soe.Build.Main>("Build")]
@@ -33,6 +35,7 @@ namespace Soe.Build
         public static void Load()
         {
             buildShard = new Shard(new PageAllocator());
+            commandLineAnchor = new Anchor<CommandFragment, Anchor<CommandFragment>.DefaultStrategy<HeapArray<EmbeddedSortedList<INotificationHook<CommandFragment>>.ListNode>>>();
         }
         
         /// <inheritdoc/>
@@ -57,31 +60,37 @@ namespace Soe.Build
         static void ProcessArgs<ArgsSource>(ref ArgsSource args)
             where ArgsSource : struct, IStreamSource
         {
-            using (CommandReader<ArgsSource> reader = new CommandReader<ArgsSource>(args, CommandReaderOptions.AllowVerbValues | CommandReaderOptions.IgnoreCase | CommandReaderOptions.IgnoreMatch))
+            try
             {
-                Span<Option> options = GetOptions(out int count).AsSpan().Slice(0, count);
-                while (reader.Read(options))
+                using (CommandReader<ArgsSource> reader = new CommandReader<ArgsSource>(args, CommandReaderOptions.AllowVerbValues | CommandReaderOptions.IgnoreCase | CommandReaderOptions.IgnoreMatch))
                 {
-                    switch (reader.Fragment.Type)
+                    Span<Option> options = GetOptions(out int count).AsSpan().Slice(0, count);
+                    while (reader.Read(options))
                     {
-                        #region Paths
-                        case CommandToken.Verb:
-                            {
-                                // TODO Collect paths and setup an entity for each of them
-                            }
-                            break;
-                        #endregion
+                        switch (reader.Fragment.Type)
+                        {
+                            #region Paths
+                            case CommandToken.Verb:
+                                {
+                                    // TODO Collect paths and setup an entity for each of them
+                                }
+                                break;
+                            #endregion
 
-                        #region Command
-                        case CommandToken.Command:
-                            if (ProcessFlags(options, reader.Fragment))
-                            {
-                                return;
-                            }
-                            break;
-                        #endregion
+                            #region Command
+                            case CommandToken.Command: if (ProcessFlags(options, reader.Fragment))
+                                {
+                                    return;
+                                }
+                                break;
+                            #endregion
+                        }
                     }
                 }
+            }
+            finally
+            {
+                commandLineAnchor.Dispose();
             }
         }
 
@@ -116,7 +125,7 @@ namespace Soe.Build
             #region Anything else
             else
             {
-                        
+                commandLineAnchor.Notify(in fragment);
             }
             #endregion
 
