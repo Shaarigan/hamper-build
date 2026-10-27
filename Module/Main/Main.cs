@@ -43,6 +43,12 @@ namespace Soe.Build
             where ArgsSource : struct, IStreamSource
         {
             ProcessArgs(ref args);
+            
+            // Run processing async
+            Task processingTask = ProcessingPipeline.Update();
+            processingTask.ConfigureAwait(false);
+            processingTask.Join();
+            
             return Application.ExitCode;
         }
         
@@ -100,7 +106,7 @@ namespace Soe.Build
         static bool ProcessFlags(Span<Option> options, in CommandFragment fragment)
         {
             #region --log
-            if(fragment.Name.Equals("log"))
+            if(fragment.Key.Equals("log"))
             {
                 if (fragment.ToInteger<TextBuffer, CommandFragment>(out int level))
                 {
@@ -114,9 +120,10 @@ namespace Soe.Build
             #endregion
                 
             #region --help
-            else if(fragment.Name.Equals("help"))
+            else if(fragment.Key.Equals("help"))
             {
                 ShowManPage(options);
+                commandLineAnchor.Notify(in fragment);
                 
                 return true;
             }
