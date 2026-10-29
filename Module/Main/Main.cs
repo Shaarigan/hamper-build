@@ -35,6 +35,8 @@ namespace Soe.Build
         public static void Load()
         {
             buildShard = new Shard(new PageAllocator());
+            buildShard.RegisterComponent<ProcessingComponent>();
+            
             commandLineAnchor = new Anchor<CommandFragment, Anchor<CommandFragment>.DefaultStrategy<HeapArray<EmbeddedSortedList<INotificationHook<CommandFragment>>.ListNode>>>();
         }
         
@@ -42,13 +44,13 @@ namespace Soe.Build
         public static int Run<ArgsSource>(ref ArgsSource args) 
             where ArgsSource : struct, IStreamSource
         {
-            ProcessArgs(ref args);
-            
-            // Run processing async
-            Task processingTask = ProcessingPipeline.Update();
-            processingTask.ConfigureAwait(false);
-            processingTask.Join();
-            
+            if(ProcessArgs(ref args))
+            {
+                // Run processing async
+                Task processingTask = ProcessingPipeline.Update(buildShard!.GetComponent<ProcessingComponent>()!);
+                processingTask.ConfigureAwait(false);
+                processingTask.Join();
+            }
             return Application.ExitCode;
         }
         
@@ -63,7 +65,7 @@ namespace Soe.Build
         /// <summary>
         /// Initializes the configuration based on the argument source
         /// </summary>
-        static void ProcessArgs<ArgsSource>(ref ArgsSource args)
+        static bool ProcessArgs<ArgsSource>(ref ArgsSource args)
             where ArgsSource : struct, IStreamSource
         {
             try
@@ -86,7 +88,7 @@ namespace Soe.Build
                             #region Command
                             case CommandToken.Command: if (ProcessFlags(options, reader.Fragment))
                                 {
-                                    return;
+                                    return false;
                                 }
                                 break;
                             #endregion
@@ -98,6 +100,7 @@ namespace Soe.Build
             {
                 commandLineAnchor.Dispose();
             }
+            return true;
         }
 
         /// <summary>
