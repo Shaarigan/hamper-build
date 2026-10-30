@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using Soe.Collections.HashSet;
 using Soe.Composable;
+using Soe.Reactive;
 
 namespace Soe.Build
 {
@@ -17,7 +18,7 @@ namespace Soe.Build
         /// <summary>
         /// An adapter handling subscriptions and processing data
         /// </summary>
-        private class PipelineAdapter : IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>, IDisposable
+        private class PipelineAdapter : AsyncSource<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>, DispatchingStrategy, SubscriptionStrategy>, IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>, IDisposable
         {
             private PoolArray<HashSet.DefaultContainer<EntityId>> entities;
             private int count;
@@ -42,9 +43,9 @@ namespace Soe.Build
             }
             
             /// <summary>
-            /// 
+            /// Adds an object to the list of objects ready for processing
             /// </summary>
-            /// <param name="entity"></param>
+            /// <param name="entity">An object ready for processing</param>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(in EntityId entity)
             {
@@ -60,14 +61,19 @@ namespace Soe.Build
             public void Dispose()
             {
                 entities.Dispose();
+                version = 0;
+                count = 0;
             }
 
+            /// <summary>
+            /// Flushes the reactive data stream and starts processing
+            /// </summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public async Task Flush()
             {
                 version++;
                 {
-                    // Placeholder
-                    await Task.CompletedTask;
+                    await OnNextAsync(this);
                 }
                 entities.Clear();
                 count = 0;
@@ -76,9 +82,9 @@ namespace Soe.Build
             #region IReadOnlyIterable Members
             /// <inheritdoc/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            ReadOnlyIterator<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy> IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>.GetEnumerator()
+            ReadOnlyIterator<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>> IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>.GetEnumerator()
             {
-                throw new NotImplementedException();
+                return new ReadOnlyIterator<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>(entities.AsSpan());
             }
             #endregion
         }
@@ -87,70 +93,70 @@ namespace Soe.Build
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Discovery"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> DiscoveryStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> DiscoveryStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return discoveryAdapter; }
         }
         
         private static readonly PipelineAdapter parsingAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Parsing"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> ParsingStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> ParsingStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return parsingAdapter; }
         }
         
         private static readonly PipelineAdapter lintingAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Linting"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> LintingStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> LintingStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return lintingAdapter; }
         }
         
         private static readonly PipelineAdapter analysisAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Analysis"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> AnalysisStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> AnalysisStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return analysisAdapter; }
         }
         
         private static readonly PipelineAdapter classificationAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Classification"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> ClassificationStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> ClassificationStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return classificationAdapter; }
         }
         
         private static readonly PipelineAdapter buildAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.BuildOrchestration"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> BuildStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> BuildStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return buildAdapter; }
         }
         
         private static readonly PipelineAdapter exportAdapter;
         /// <summary>
         /// A reactive data stream populating <see cref="ProcessingPhase.Export"/> updates
         /// </summary>
-        public static IObservable<IReadOnlyIterable<EntityId, ReadOnlyIterator<EntityId>.DefaultStrategy>> ExportStream
+        public static IAsyncObservable<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>> ExportStream
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { throw new NotImplementedException(); }
+            get { return exportAdapter; }
         }
     }
 }

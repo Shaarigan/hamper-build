@@ -38,7 +38,7 @@ namespace Soe.Build
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return current; }
         }
-
+        
         /// <summary>
         /// Gets the current version of the provided processing stream
         /// </summary>

@@ -46,10 +46,22 @@ namespace Soe.Build
         {
             if(ProcessArgs(ref args))
             {
-                // Run processing async
-                Task processingTask = ProcessingPipeline.Update(buildShard!.GetComponent<ProcessingComponent>()!);
-                processingTask.ConfigureAwait(false);
-                processingTask.Join();
+                Component<ProcessingComponent> processingComponent = buildShard!.GetComponent<ProcessingComponent>()!;
+                if(processingComponent.Count > 0)
+                {
+                    // Run processing async
+                    Task processingTask = ProcessingPipeline.Update(processingComponent);
+                    processingTask.ConfigureAwait(false);
+                    processingTask.Join();
+                }
+                else
+                {
+                    Application.Log(VerbosityFlags.Error, SeverityFlags.Full, "No path specified or paths contain no valid sources!");
+                    if (!Console.IsOutputRedirected)
+                    {
+                        Application.Log(VerbosityFlags.Message, SeverityFlags.Full, "Use --help for more information");
+                    }
+                }
             }
             return Application.ExitCode;
         }
