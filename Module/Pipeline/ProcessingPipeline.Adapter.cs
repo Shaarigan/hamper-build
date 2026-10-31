@@ -8,7 +8,7 @@ using Soe.Reactive;
 
 namespace Soe.Build
 {
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal

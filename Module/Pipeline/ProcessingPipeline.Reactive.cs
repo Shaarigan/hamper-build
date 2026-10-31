@@ -10,7 +10,7 @@ using Soe.Reactive;
 
 namespace Soe.Build
 {
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal
@@ -122,7 +122,12 @@ namespace Soe.Build
             
             #region IDispatchingStrategy Members
             /// <inheritdoc/>
-            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnNextAsync(Span<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers, in IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>> value)
+            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnNextAsync(
+                ReadOnlySpan<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                    HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers,
+                in IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                    HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>> value)
             {
                 Task[] tasks = ArrayPool<Task>.Shared.Rent(observers.Length);
                 int count = 0;
@@ -138,7 +143,11 @@ namespace Soe.Build
                 return Dispatch(tasks, count);
             }
             /// <inheritdoc/>
-            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnErrorAsync(Span<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers, in Exception error)
+            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnErrorAsync(
+                ReadOnlySpan<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                    HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers,
+                in Exception error)
             {
                 Task[] tasks = ArrayPool<Task>.Shared.Rent(observers.Length);
                 int count = 0;
@@ -154,7 +163,10 @@ namespace Soe.Build
                 return Dispatch(tasks, count);
             }
             /// <inheritdoc/>
-            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnCompletedAsync(Span<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers)
+            Task IAsyncDispatchingStrategy<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>.OnCompletedAsync(
+                ReadOnlySpan<IAsyncObserver<IReadOnlyIterable<HashSet.DefaultContainer<EntityId>,
+                    HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>>>?> observers)
             {
                 Task[] tasks = ArrayPool<Task>.Shared.Rent(observers.Length);
                 int count = 0;

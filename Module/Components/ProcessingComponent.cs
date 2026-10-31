@@ -10,7 +10,7 @@ namespace Soe.Build
     /// </summary>
     /// <param name="phase">The processing phase requested by the object</param>
     [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal

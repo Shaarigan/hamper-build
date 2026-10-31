@@ -17,7 +17,7 @@ namespace Soe.Build
     /// <summary>
     /// Declares the main module for this tool
     /// </summary>
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal

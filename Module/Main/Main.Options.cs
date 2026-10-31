@@ -9,7 +9,7 @@ namespace Soe.Build
 {
     // ReSharper disable ClassCannotBeInstantiated
     
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal

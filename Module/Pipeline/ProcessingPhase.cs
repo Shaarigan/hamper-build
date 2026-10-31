@@ -6,7 +6,7 @@ namespace Soe.Build
     /// <summary>
     /// Defines the available pipeline states
     /// </summary>
-    #if EXPORT_HAMPER_CORE_SHARP
+    #if EXPORT_HAMPER_BUILD_MAIN
     public
     #else
     internal
