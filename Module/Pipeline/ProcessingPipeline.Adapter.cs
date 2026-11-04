@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using Soe.Collections.HashSet;
 using Soe.Composable;
 using Soe.Reactive;
+using Soe.Runtime;
 
 namespace Soe.Build
 {
@@ -72,9 +73,11 @@ namespace Soe.Build
             public async Task Flush()
             {
                 version++;
+                if(strategy.Subscriptions.Count > 0)
                 {
                     await OnNextAsync(this);
                 }
+                else Application.Log(VerbosityFlags.Warning, SeverityFlags.Full, "Pipeline adapter({0}) has no consumers", Current.ToString());
                 entities.Clear();
                 count = 0;
             }

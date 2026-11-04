@@ -8,6 +8,7 @@ using Soe.Composable;
 using Soe.Parsing;
 using Soe.Reactive;
 using Soe.Runtime;
+using Soe.Storage;
 
 [assembly: RuntimeModule<Soe.Build.Main>("Build")]
 namespace Soe.Build
@@ -36,6 +37,7 @@ namespace Soe.Build
         {
             buildShard = new Shard(new PageAllocator());
             buildShard.RegisterComponent<ProcessingComponent>();
+            buildShard.RegisterComponent<TargetComponent>();
             
             commandLineAnchor = new Anchor<CommandFragment, Anchor<CommandFragment>.DefaultStrategy<HeapArray<EmbeddedSortedList<INotificationHook<CommandFragment>>.ListNode>>>();
         }
@@ -56,10 +58,10 @@ namespace Soe.Build
                 }
                 else
                 {
-                    Application.Log(VerbosityFlags.Error, SeverityFlags.Full, "No path specified or paths contain no valid sources!");
+                    Application.Log(VerbosityFlags.Error, SeverityFlags.Silent, "No path specified or paths contain no valid sources!");
                     if (!Console.IsOutputRedirected)
                     {
-                        Application.Log(VerbosityFlags.Message, SeverityFlags.Full, "Use --help for more information");
+                        Application.Log(VerbosityFlags.Message, SeverityFlags.Silent, "Use --help for more information");
                     }
                 }
             }
@@ -92,7 +94,11 @@ namespace Soe.Build
                             #region Paths
                             case CommandToken.Verb:
                                 {
-                                    // TODO Collect paths and setup an entity for each of them
+                                    string verb = ResourceIdentifier.Normalize(reader.Fragment.Value.ToString(), NormalizationFlags.Default);
+                                    
+                                    EntityId entity = buildShard!.Entities.Create();
+                                    entity.AddComponent<ProcessingComponent>() = new ProcessingComponent(ProcessingPhase.Discovery);
+                                    entity.AddComponent<TargetComponent>() = new TargetComponent(verb);
                                 }
                                 break;
                             #endregion
@@ -153,7 +159,7 @@ namespace Soe.Build
 
             return false;
         }
-
+        
         /// <summary>
         /// Displays the usage manual to the user
         /// </summary>
