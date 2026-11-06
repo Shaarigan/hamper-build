@@ -38,6 +38,7 @@ namespace Soe.Build
             buildShard = new Shard(new PageAllocator());
             buildShard.RegisterComponent<ProcessingComponent>();
             buildShard.RegisterComponent<TargetComponent>();
+            buildShard.RegisterComponent<WorkspaceComponent>();
             
             commandLineAnchor = new Anchor<CommandFragment, Anchor<CommandFragment>.DefaultStrategy<HeapArray<EmbeddedSortedList<INotificationHook<CommandFragment>>.ListNode>>>();
         }
@@ -51,6 +52,12 @@ namespace Soe.Build
                 Component<ProcessingComponent> processingComponent = buildShard!.GetComponent<ProcessingComponent>()!;
                 if(processingComponent.Count > 0)
                 {
+                    AddWorkspace(Application.FindWorkspaceRoot(WorkspaceType.Root), WorkspaceType.Root);
+                    if (String.Equals(Application.BaseDirectory, Application.LocalDirectory))
+                    {
+                        AddWorkspace(Application.FindWorkspaceRoot(WorkspaceType.Tree), WorkspaceType.Tree);
+                    }
+                    
                     // Run processing async
                     Task processingTask = ProcessingPipeline.Update(processingComponent);
                     processingTask.ConfigureAwait(false);
@@ -76,6 +83,17 @@ namespace Soe.Build
             buildShard = null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void AddWorkspace(string? root, WorkspaceType type)
+        {
+            if(!string.IsNullOrWhiteSpace(root))
+            {
+                EntityId entity = buildShard!.Entities.Create();
+                entity.AddComponent<ProcessingComponent>() = new ProcessingComponent(ProcessingPhase.Discovery);
+                entity.AddComponent<WorkspaceComponent>() = new WorkspaceComponent(root, type);
+            }
+        }
+        
         /// <summary>
         /// Initializes the configuration based on the argument source
         /// </summary>
@@ -159,7 +177,7 @@ namespace Soe.Build
 
             return false;
         }
-        
+
         /// <summary>
         /// Displays the usage manual to the user
         /// </summary>
