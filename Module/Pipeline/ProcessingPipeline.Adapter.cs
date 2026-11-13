@@ -16,6 +16,8 @@ namespace Soe.Build
     #endif
     static partial class ProcessingPipeline
     {
+        private delegate T PostProcessingHook<out T>(IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>> iterator);
+        
         /// <summary>
         /// An adapter handling subscriptions and processing data
         /// </summary>
@@ -66,6 +68,25 @@ namespace Soe.Build
                 count = 0;
             }
 
+            /// <summary>
+            /// Flushes the reactive data stream and starts processing
+            /// </summary>
+            /// <param name="hook">A post-processing hook called when the adapter finishes</param>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public async Task<T> Flush<T>(PostProcessingHook<T> hook)
+            {
+                version++;
+                if(strategy.Subscriptions.Count > 0)
+                {
+                    await OnNextAsync(this);
+                }
+                else Application.Log(VerbosityFlags.Warning, SeverityFlags.Full, "Pipeline adapter({0}) has no consumers", Current.ToString());
+                T result = hook.Invoke(this);
+                entities.Clear();
+                count = 0;
+
+                return result;
+            }
             /// <summary>
             /// Flushes the reactive data stream and starts processing
             /// </summary>

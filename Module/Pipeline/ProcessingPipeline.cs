@@ -3,7 +3,9 @@
 
 using System.Runtime.CompilerServices;
 using Soe.Collections.Embedded;
+using Soe.Collections.HashSet;
 using Soe.Composable;
+using Soe.Runtime;
 
 namespace Soe.Build
 {
@@ -91,10 +93,15 @@ namespace Soe.Build
             do
             {
                 // Process the most recent phase, then evaluate
+                
                 if (discoveryAdapter.Count > 0)
                 {
                     current = ProcessingPhase.Discovery;
-                    await discoveryAdapter.Flush();
+                    if (!await discoveryAdapter.Flush(ValidateTargets))
+                    {
+                        // User decided to cancel execution
+                        break;
+                    }
                 }
                 else if (parsingAdapter.Count > 0)
                 {
@@ -126,77 +133,74 @@ namespace Soe.Build
                     current = ProcessingPhase.Export;
                     await exportAdapter.Flush();
                 }
-                SystemUpdate();
-                void SystemUpdate()
+                
+                ReadOnlySpan<EntityId> entities = processingComponent.AsReadOnlySpan();
+                ReadOnlySpan<ProcessingComponent> components = processingComponent.AsSpan();
+                for (int i = 0; i < entities.Length; i++)
                 {
-                    ReadOnlySpan<EntityId> entities = processingComponent.AsReadOnlySpan();
-                    ReadOnlySpan<ProcessingComponent> components = processingComponent.AsSpan();
-                    for (int i = 0; i < entities.Length; i++)
+                    if (GetCurrentVersion(components[i].Phase) != components[i].Version)
                     {
-                        if (GetCurrentVersion(components[i].Phase) != components[i].Version)
-                        {
-                            processingComponent.Remove(entities[i--]);
-                            entities = processingComponent.AsReadOnlySpan();
-                            components = processingComponent.AsSpan();
-                        }
-                        else switch (components[i].Phase)
-                        {
-                            #region Discovery
-                            case ProcessingPhase.Discovery:
-                                {
-                                    discoveryAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        processingComponent.Remove(entities[i--]);
+                        entities = processingComponent.AsReadOnlySpan();
+                        components = processingComponent.AsSpan();
+                    }
+                    else switch (components[i].Phase)
+                    {
+                        #region Discovery
+                        case ProcessingPhase.Discovery:
+                            {
+                                discoveryAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                             
-                            #region Parsing
-                            case ProcessingPhase.Parsing:
-                                {
-                                    parsingAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        #region Parsing
+                        case ProcessingPhase.Parsing:
+                            {
+                                parsingAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                             
-                            #region Linting
-                            case ProcessingPhase.Linting:
-                                {
-                                    lintingAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        #region Linting
+                        case ProcessingPhase.Linting:
+                            {
+                                lintingAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                             
-                            #region Analysis
-                            case ProcessingPhase.Analysis:
-                                {
-                                    analysisAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        #region Analysis
+                        case ProcessingPhase.Analysis:
+                            {
+                                analysisAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                             
-                            #region Classification
-                            case ProcessingPhase.Classification:
-                                {
-                                    classificationAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        #region Classification
+                        case ProcessingPhase.Classification:
+                            {
+                                classificationAdapter.Add(entities[i]);
+                            }
+                        break;
+                        #endregion
                             
-                            #region Build
-                            case ProcessingPhase.BuildOrchestration:
-                                {
-                                    buildAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
+                        #region Build
+                        case ProcessingPhase.BuildOrchestration:
+                            {
+                                buildAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                             
-                            #region Export
-                            case ProcessingPhase.Export:
-                                {
-                                    exportAdapter.Add(entities[i]);
-                                }
-                                break;
-                            #endregion
-                        }
+                        #region Export
+                        case ProcessingPhase.Export:
+                            {
+                                exportAdapter.Add(entities[i]);
+                            }
+                            break;
+                        #endregion
                     }
                 }
             }
@@ -216,6 +220,21 @@ namespace Soe.Build
             classificationAdapter.Dispose();
             buildAdapter.Dispose();
             exportAdapter.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool ValidateTargets(IReadOnlyIterable<HashSet.DefaultContainer<EntityId>, HashSet.ReadOnlyIteratorStrategy<EntityId, HashSet.DefaultContainer<EntityId>>> iterator)
+        {
+            int unresolvedTargets = 0;
+            foreach (EntityId entity in iterator)
+            {
+                if (entity.TryGetComponent(out Ref<TargetComponent> target) && !entity.TryGetComponent<WorkspaceComponent>(out _) && !entity.TryGetComponent<LeafComponent>(out _))
+                {
+                    Application.Log(VerbosityFlags.Warning, SeverityFlags.Silent, string.Concat("Unable to resolve target '", target.Value.Identifier.Target.FullName, "'"));
+                    unresolvedTargets++;
+                }
+            }
+            return (unresolvedTargets == 0 || Application.Prompt(PromptLocalisation.Default, PromptSettings.Default, "Continue anyway?")) ;
         }
     }
 }

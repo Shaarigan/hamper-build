@@ -19,7 +19,6 @@ namespace Soe.Build
     #endif
     readonly struct WorkspaceComponent(string source, WorkspaceType type)
     {
-        private readonly WorkspaceType type = type;
         /// <summary>
         /// Gets the type of this workspace
         /// </summary>
