@@ -1,0 +1,9 @@
+{
+  "type": "package",
+  "name": "hamper.build.main",
+  "version": "1.0.0",
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "hamper.core.sharp": "1.1.x"
+  }
+} 

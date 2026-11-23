@@ -14,6 +14,7 @@ using Soe.Storage;
 namespace Soe.Build
 {
     // ReSharper disable ClassCannotBeInstantiated
+    // ReSharper disable ClassNeverInstantiated.Global
     
     /// <summary>
     /// Declares the main module for this tool
@@ -26,6 +27,14 @@ namespace Soe.Build
     sealed partial class Main : IRuntimeModule, IMainModule
     {
         private static Shard? buildShard;
+        /// <summary>
+        /// Gets the storage ID associated with this module
+        /// </summary>
+        internal static int StorageId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return (buildShard?.Id ?? -1); }
+        }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Main()
@@ -247,5 +256,6 @@ namespace Soe.Build
         }
     }
     
+    // ReSharper restore ClassNeverInstantiated.Global
     // ReSharper restore ClassCannotBeInstantiated
 }
