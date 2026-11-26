@@ -42,9 +42,10 @@ namespace Soe.Build.Generator
         public bool Add(ReadOnlySpan<Char32> items)
         {
             bool result = false;
-            for (UInt32 i = 0, current = 0; i < items.Length; i++)
+            for (UInt32 i = 0, current = 0, id = HashUtility.FnvOffsetBias; i < items.Length; i++)
             {
-                result |= Add((int)i, ref current, items[(int)i]);
+                id = ((UInt32)items[(int)i]).Fnv32(id);
+                result |= Add((int)id, (int)i, ref current, items[(int)i]);
             }
             return result;
         }
@@ -59,15 +60,16 @@ namespace Soe.Build.Generator
         public bool Add(ReadOnlySpan<char> items)
         {
             bool result = false;
-            for (UInt32 i = 0, current = 0; i < items.Length; i++)
+            for (UInt32 i = 0, current = 0, id = HashUtility.FnvOffsetBias; i < items.Length; i++)
             {
-                result |= Add((int)i, ref current, items[(int)i]);
+                id = ((UInt32)items[(int)i]).Fnv32(id);
+                result |= Add((int)id, (int)i, ref current, items[(int)i]);
             }
             return result;
         }
-        bool Add(int slice, ref UInt32 current, UInt32 item)
+        bool Add(int id, int slice, ref UInt32 current, UInt32 item)
         {
-            TokenGraphEdge edge = new TokenGraphEdge(slice, current, item);
+            TokenGraphEdge edge = new TokenGraphEdge(id, slice, current, item);
             current = edge.Outgoing;
             
             int hash = edge.GetHashCode();
@@ -110,12 +112,17 @@ namespace Soe.Build.Generator
             int index = current.Slice + 1;
             foreach (TokenGraphEdge edge in edges)
             {
-                if (edge.Slice == index && edge.Incoming == current.Outgoing)
+                if (IsSuccessor(index, current, edge))
                 {
                     return true;
                 }
             }
             return false;
+        }
+
+        bool IsSuccessor(int index, TokenGraphEdge source, TokenGraphEdge target)
+        {
+            return (target.Slice == index && target.Id == (int)((UInt32)target.Outgoing).Fnv32((UInt32)source.Id));
         }
 
         /// <summary>
@@ -170,7 +177,7 @@ namespace Soe.Build.Generator
             int index = current.Slice + 1;
             foreach (TokenGraphEdge edge in edges)
             {
-                if (edge.Slice == index && edge.Incoming == current.Outgoing)
+                if (IsSuccessor(index, current, edge))
                 {
                     slice.Add(edge);
                 }
@@ -192,7 +199,7 @@ namespace Soe.Build.Generator
             int index = current.Slice + 1;
             foreach (TokenGraphEdge edge in edges)
             {
-                if (edge.Slice == index && edge.Incoming == current.Outgoing)
+                if (IsSuccessor(index, current, edge))
                 {
                     slice.Add(edge);
                 }

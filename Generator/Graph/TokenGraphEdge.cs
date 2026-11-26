@@ -16,6 +16,16 @@ namespace Soe.Build.Generator
     #endif
     readonly struct TokenGraphEdge : IEquatable<TokenGraphEdge>
     {
+        private readonly int id;
+        /// <summary>
+        /// The unique node ID
+        /// </summary>
+        public int Id
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return id; }
+        }
+        
         private readonly Char32 incoming;
         /// <summary>
         /// The previous node this edge has come from
@@ -49,11 +59,13 @@ namespace Soe.Build.Generator
         /// <summary>
         /// Initializes a new directed edge from one node to another 
         /// </summary>
+        /// <param name="id">The unique edge ID</param>
         /// <param name="slice">The slice ID this edge belongs to</param>
         /// <param name="incoming">The previous node this edge has come from</param>
         /// <param name="outgoing">The succeeding node this edge is forwarded to</param>
-        public TokenGraphEdge(int slice, Char32 incoming, Char32 outgoing)
+        public TokenGraphEdge(int id, int slice, Char32 incoming, Char32 outgoing)
         {
+            this.id = id;
             this.slice = slice;
             this.incoming = incoming;
             this.outgoing = outgoing;
@@ -61,17 +73,18 @@ namespace Soe.Build.Generator
         /// <summary>
         /// Initializes a new directed edge from one the root state to another node 
         /// </summary>
+        /// <param name="id">The unique edge ID</param>
         /// <param name="slice">The slice ID this edge belongs to</param>
         /// <param name="outgoing">The succeeding node this edge is forwarded to</param>
-        public TokenGraphEdge(int slice, Char32 outgoing)
-            :this(slice, default, outgoing)
+        public TokenGraphEdge(int id, int slice, Char32 outgoing)
+            :this(id, slice, default, outgoing)
         { }
         
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(TokenGraphEdge other)
         {
-            return (incoming.Equals(other.incoming) && outgoing.Equals(other.outgoing));
+            return (id == other.id && incoming.Equals(other.incoming) && outgoing.Equals(other.outgoing));
         }
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,7 +97,7 @@ namespace Soe.Build.Generator
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return HashCode.Combine(incoming, outgoing);
+            return HashCode.Combine(id, incoming, outgoing);
         }
         
         /// <inheritdoc/>
